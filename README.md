@@ -16,6 +16,21 @@ A lightweight desktop webcam overlay with a circular or rectangular shape that f
 - ❌ **Close button** - ✕ button to close application (hidden when locked)
 - 🎬 **Full video display** - Video fills the entire shape without cropping
 
+## 📸 Screenshots
+
+> 🎬 **Demo GIF or screenshot coming soon!** Add a visual demonstration of the overlay in action.
+
+## 🚀 Quick Start
+
+For experienced users, get up and running in seconds:
+
+```bash
+git clone https://github.com/joejose2007/webcam-overlay.git
+cd webcam-overlay
+python3 -m venv venv && source venv/bin/activate  # macOS/Linux (Windows: venv\Scripts\activate)
+pip install PyQt5 opencv-python-headless && python webcam-overlay.py
+```
+
 ## 📦 Installation
 
 ### 📋 Prerequisites
