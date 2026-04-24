@@ -2,8 +2,6 @@
 
 A lightweight desktop webcam overlay with a circular or rectangular shape that floats above all windows. Features drag-and-drop positioning, scroll-to-resize, opacity control, and shape switching.
 
-![Webcam Overlay Screenshot](screenshot.png)
-
 ## Features
 
 - **Circle or Rectangle shape** - Double-click to switch between shapes
