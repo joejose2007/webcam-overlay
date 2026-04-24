@@ -1,47 +1,8 @@
 import sys
 import cv2
-from PyQt5.QtWidgets import (QApplication, QWidget, QPushButton, QMenu, QWidgetAction, 
-                             QSlider, QLabel, QHBoxLayout, QGridLayout, QScrollArea)
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QMenu, QWidgetAction, QSlider, QLabel, QHBoxLayout
 from PyQt5.QtCore import Qt, QTimer, QPoint
-from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen, QColor, QPainterPath, QFont
-
-class EmojiOverlay(QWidget):
-    def __init__(self, emoji, parent):
-        super().__init__(parent)
-        self.emoji = emoji
-        self.dragging = False
-        self.drag_offset = QPoint()
-        self.resize(50, 50)
-        self.setStyleSheet("background: transparent;")
-        
-    def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
-        painter.setRenderHint(QPainter.SmoothPixmapTransform)
-        font = QFont("Arial", 32)
-        painter.setFont(font)
-        painter.drawText(self.rect(), Qt.AlignCenter, self.emoji)
-        
-    def mousePressEvent(self, e):
-        if e.button() == Qt.LeftButton:
-            self.dragging = True
-            self.drag_offset = e.pos()
-            
-    def mouseMoveEvent(self, e):
-        if self.dragging:
-            parent_pos = self.parent().mapToGlobal(QPoint(0, 0))
-            new_pos = e.globalPos() - self.drag_offset - parent_pos
-            self.move(new_pos)
-            
-    def mouseReleaseEvent(self, e):
-        self.dragging = False
-        
-    def contextMenuEvent(self, e):
-        menu = QMenu(self)
-        delete_action = menu.addAction("🗑️ Remove")
-        if menu.exec_(e.globalPos()) == delete_action:
-            self.deleteLater()
-
+from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen, QColor, QPainterPath
 
 class WebcamOverlay(QWidget):
     def __init__(self):
@@ -65,38 +26,26 @@ class WebcamOverlay(QWidget):
         self.drag_start_pos = QPoint()
         self.drag_start_geom = QPoint()
         self.frame = None
-        self.emojis = []
 
-        # Style for buttons
-        button_style = """
-            QPushButton {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 rgba(80,80,80,0.8), stop:1 rgba(60,60,60,0.9));
-                color: white;
-                border: none;
-                border-radius: 12px;
-                font-size: 14px;
-            }
-            QPushButton:hover {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 rgba(100,100,100,0.9), stop:1 rgba(80,80,80,1));
-            }
-        """
-        
         # Close button
         self.close_btn = QPushButton("✕", self)
         self.close_btn.setFixedSize(24, 24)
         self.close_btn.setStyleSheet(
-            "QPushButton{background:rgba(220,50,50,0.8);color:white;border:none;"
+            "QPushButton{background:rgba(255,0,0,0.8);color:white;border:none;"
             "border-radius:12px;font-weight:bold;font-size:14px;}"
-            "QPushButton:hover{background:rgba(240,70,70,0.9);}"
+            "QPushButton:hover{background:rgba(255,50,50,0.9);}"
         )
         self.close_btn.clicked.connect(self.close_app)
 
         # Settings button
         self.settings_btn = QPushButton("⚙", self)
         self.settings_btn.setFixedSize(24, 24)
-        self.settings_btn.setStyleSheet(button_style)
+        self.settings_btn.setStyleSheet(
+            "QPushButton{background:rgba(80,80,80,0.8);color:white;border:none;"
+            "border-radius:12px;font-size:14px;}"
+            "QPushButton:hover{background:rgba(100,100,100,0.9);}"
+        )
+        self.settings_btn.clicked.connect(self.show_settings_menu)
 
         self.update_buttons_position()
         self.setWindowOpacity(self.opacity)
@@ -123,120 +72,37 @@ class WebcamOverlay(QWidget):
         self.close_btn.setVisible(not self.fixed)
         self.settings_btn.setVisible(not self.fixed)
 
-    def add_emoji(self):
-        emojis = ["😊", "😂", "❤️", "👍", "🎉", "🔥", "⭐", "✨", 
-                  "😎", "🤔", "👋", "🎊", "💯", "🌟", "💪", "🙌"]
-        
-        menu = QMenu(self)
-        menu.setStyleSheet("""
-            QMenu {
-                background-color: rgba(40,40,40,0.95);
-                color: white;
-                border: 1px solid rgba(80,80,80,0.8);
-                border-radius: 8px;
-                padding: 8px;
-            }
-            QMenu::item {
-                padding: 8px 16px;
-                border-radius: 4px;
-            }
-            QMenu::item:selected {
-                background: rgba(100,100,100,0.5);
-            }
-        """)
-        
-        # Create a grid layout for emojis
-        emoji_widget = QWidget()
-        grid = QGridLayout(emoji_widget)
-        grid.setSpacing(4)
-        
-        row, col = 0, 0
-        for emoji in emojis:
-            btn = QPushButton(emoji)
-            btn.setFixedSize(40, 40)
-            btn.setStyleSheet("""
-                QPushButton {
-                    background: transparent;
-                    border: none;
-                    font-size: 24px;
-                    padding: 2px;
-                }
-                QPushButton:hover {
-                    background: rgba(100,100,100,0.3);
-                    border-radius: 8px;
-                }
-            """)
-            btn.clicked.connect(lambda checked, e=emoji: self.create_emoji(e))
-            grid.addWidget(btn, row, col)
-            col += 1
-            if col >= 4:
-                col = 0
-                row += 1
-        
-        action = QWidgetAction(menu)
-        action.setDefaultWidget(emoji_widget)
-        menu.addAction(action)
-        
-        menu.exec_(self.settings_btn.mapToGlobal(self.settings_btn.rect().bottomLeft()))
-
-    def create_emoji(self, emoji):
-        e = EmojiOverlay(emoji, self)
-        e.move(self.width() // 2 - 25, self.height() // 2 - 25)
-        e.show()
-        self.emojis.append(e)
-
     def set_opacity(self, value):
         self.opacity = value / 100.0
         self.setWindowOpacity(self.opacity)
 
     def show_settings_menu(self):
         menu = QMenu(self)
-        menu.setStyleSheet("""
-            QMenu {
-                background-color: rgba(40,40,40,0.95);
-                color: white;
-                border: 1px solid rgba(80,80,80,0.8);
-                border-radius: 8px;
-                padding: 8px;
-            }
-            QMenu::item {
-                padding: 8px 16px;
-                border-radius: 4px;
-            }
-            QMenu::item:selected {
-                background: rgba(100,100,100,0.5);
-            }
-        """)
+        menu.setStyleSheet(
+            "QMenu{background-color:rgba(40,40,40,0.95);color:white;"
+            "border:1px solid rgba(80,80,80,0.8);border-radius:8px;padding:8px;}"
+            "QMenu::item{padding:8px 16px;border-radius:4px;}"
+            "QMenu::item:selected{background:rgba(100,100,100,0.5);}"
+        )
         
-        circle_action = menu.addAction("🔵 Switch to Circle" if self.shape == "rectangle" else "🔲 Switch to Rectangle")
-        emoji_action = menu.addAction("😊 Add Emoji")
+        circle_action = menu.addAction("Switch to Circle" if self.shape == "rectangle" else "Switch to Rectangle")
         
         menu.addSeparator()
-        
         # Opacity slider
         opacity_action = QWidgetAction(menu)
         opacity_widget = QWidget()
         opacity_layout = QHBoxLayout(opacity_widget)
         opacity_layout.setContentsMargins(12, 8, 12, 8)
         opacity_label = QLabel("Opacity:")
-        opacity_label.setStyleSheet("color: white;")
+        opacity_label.setStyleSheet("color:white;")
         opacity_slider = QSlider(Qt.Horizontal)
         opacity_slider.setRange(1, 100)
         opacity_slider.setValue(int(self.opacity * 100))
         opacity_slider.setFixedWidth(120)
-        opacity_slider.setStyleSheet("""
-            QSlider::groove:horizontal {
-                height: 6px;
-                background: rgba(100,100,100,0.5);
-                border-radius: 3px;
-            }
-            QSlider::handle:horizontal {
-                width: 18px;
-                margin: -6px 0;
-                background: white;
-                border-radius: 9px;
-            }
-        """)
+        opacity_slider.setStyleSheet(
+            "QSlider::groove:horizontal{height:6px;background:rgba(100,100,100,0.5);border-radius:3px;}"
+            "QSlider::handle:horizontal{width:18px;margin:-6px 0;background:white;border-radius:9px;}"
+        )
         opacity_slider.valueChanged.connect(self.set_opacity)
         opacity_layout.addWidget(opacity_label)
         opacity_layout.addWidget(opacity_slider)
@@ -246,15 +112,10 @@ class WebcamOverlay(QWidget):
         action = menu.exec_(self.settings_btn.mapToGlobal(self.settings_btn.rect().bottomLeft()))
 
         if action == circle_action:
-            if self.shape == "circle":
-                self.shape = "rectangle"
-            else:
-                self.shape = "circle"
+            self.shape = "rectangle" if self.shape == "circle" else "circle"
             self.update_widget_size()
             self.update_buttons_position()
             self.update()
-        elif action == emoji_action:
-            self.add_emoji()
 
     def update_frame(self):
         ret, frame = self.cap.read()
@@ -272,7 +133,6 @@ class WebcamOverlay(QWidget):
             return
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        painter.setRenderHint(QPainter.SmoothPixmapTransform)
 
         cx, cy = self.width() // 2, self.height() // 2
         
@@ -340,10 +200,7 @@ class WebcamOverlay(QWidget):
         self.dragging = False
 
     def mouseDoubleClickEvent(self, e):
-        if self.shape == "circle":
-            self.shape = "rectangle"
-        else:
-            self.shape = "circle"
+        self.shape = "rectangle" if self.shape == "circle" else "circle"
         self.update_widget_size()
         self.update_buttons_position()
         self.update()
