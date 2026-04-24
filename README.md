@@ -20,6 +20,18 @@ A lightweight desktop webcam overlay with a circular or rectangular shape that f
 
 > 🎬 **Demo GIF or screenshot coming soon!** Add a visual demonstration of the overlay in action.
 
+## 🎯 Use Cases
+
+Perfect for:
+
+- 🎮 **Gaming streams** - Twitch, YouTube Gaming, OBS streaming with live webcam feed
+- 📹 **Content creation** - Video recordings, tutorials, screen captures with facecam overlay
+- 🎥 **Online meetings** - Zoom, Microsoft Teams, Google Meet picture-in-picture
+- 📺 **Broadcasting** - Live streaming your webcam feed independently
+- 🎪 **Presentations** - Live presentations with your face visible over slides
+- 📚 **Educational videos** - Instructional content with instructor visible in corner
+- 🎬 **Video production** - Quick visual reference without fullscreen camera window
+
 ## 🚀 Quick Start
 
 For experienced users, get up and running in seconds:
@@ -166,6 +178,50 @@ You need Python 3.7+ installed on your system.
 - 📷 opencv-python-headless
 - 📹 Working webcam
 
+## ⚙️ Customization
+
+You can easily customize the application by editing `webcam-overlay.py`:
+
+### Common Modifications
+
+**Change default shape** (Circle or Rectangle):
+```python
+# Find this line and change to False for rectangle
+self.is_circle = True
+```
+
+**Adjust default overlay size**:
+```python
+# Change the initial size (default: 200 pixels)
+initial_size = 200
+```
+
+**Modify minimum and maximum size limits**:
+```python
+# Line with scroll handler - change 100 and 500
+min_size = 100
+max_size = 500
+```
+
+**Change border thickness**:
+```python
+# Adjust border width (default: 3 pixels)
+border_width = 3
+```
+
+**Use different camera**:
+```python
+# Change camera index if you have multiple cameras
+# Try 0, 1, 2, etc.
+self.cap = cv2.VideoCapture(0)
+```
+
+**Adjust border color**:
+```python
+# Change RGB values (currently black: 0, 0, 0)
+border_color = (0, 0, 0)  # BGR format
+```
+
 ## 🔧 Troubleshooting
 
 **📹 Camera not detected:**
@@ -179,6 +235,11 @@ You need Python 3.7+ installed on your system.
 **⚠️ Qt/platform errors:**
 - Use the virtual environment method shown above
 - On Linux, you may need: `sudo apt install -y python3-pyqt5`
+
+**🔒 Camera permissions denied:**
+- **Windows**: Settings → Privacy & Security → Camera
+- **macOS**: System Preferences → Security & Privacy → Camera
+- **Linux**: Run `sudo usermod -aG video $USER` (restart after)
 
 ## 📄 License
 
